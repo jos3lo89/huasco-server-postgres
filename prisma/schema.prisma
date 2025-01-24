@@ -1,0 +1,303 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Empresa {
+  id_empresa String   @id @default(uuid())
+  nombre     String
+  telefono   String
+  email      String?
+  direccion  String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Usuarios {
+  id_usuario  String    @id @default(uuid())
+  id_empleado String    @unique
+  usuario     String    @unique
+  password    String
+  puesto      String // "admin", "empleado", etc.
+  estado      Boolean   @default(true)
+  empleado    Empleados @relation(fields: [id_empleado], references: [id_empleado])
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+}
+
+model Empleados {
+  id_empleado        String             @id @default(uuid())
+  nombre             String
+  apellido           String
+  puesto             String
+  numero_telefono    String?
+  foto_url           String?
+  foto_id            String?
+  fecha_contratacion DateTime?
+  dni                String
+  fecha_nacimiento   DateTime?
+  email              String?
+  direccion          String?
+  estado             Boolean
+  Bonos              Bonos[]
+  Ventas             Ventas[]
+  Devoluciones       Devoluciones[]
+  Caja               Caja[]
+  SalidasProductos   SalidasProductos[]
+  usuario            Usuarios?
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @updatedAt
+}
+
+model Clientes {
+  id_cliente      String          @id @default(uuid())
+  nombre          String
+  deuda           Decimal         @default(0.00)
+  total_pagos     Decimal         @default(0.00) // acumulados
+  estado          Boolean
+  numero_telefono String?
+  dni_ruc         String?
+  direccion       String?
+  email           String?
+  observaciones   String?
+  Ventas          Ventas[]
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
+  PagosClientes   PagosClientes[]
+}
+
+model PagosClientes {
+  id             String   @id @default(uuid())
+  monto_recibido Decimal
+  monto_pagado   Decimal
+  vuelto         Decimal
+  fecha_pago     DateTime @default(now())
+  metodo_pago    String // efectivo, transferencia, etc.
+  observacion    String?
+  id_cliente     String
+  Clientes       Clientes @relation(fields: [id_cliente], references: [id_cliente])
+  id_venta       String   @unique
+  ventas         Ventas   @relation(fields: [id_venta], references: [id_venta])
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+}
+
+model Productos {
+  id_producto            String           @id @default(uuid()) // Identificador único del producto.
+  id_categoria           String // Identificador de la categoría a la que pertenece el producto.
+  id_proveedor           String // Identificador del proveedor asociado al producto.
+  // si_vence               Boolean          @default(true) // Indica si el producto tiene fecha de vencimiento.
+  tiene_descuento        Boolean          @default(false) // Indica si el producto tiene descuento activo.
+  venta_por_fraccion     Boolean          @default(false) // Indica si el producto puede ser vendido por fracciones (ej. peso).
+  estado                 Boolean          @default(true) // Estado del producto (activo/inactivo).
+  tiene_vencimiento      Boolean          @default(true) // Vedadero si el producto tiene vencimiento.
+  sku                    String // Código único para identificar el producto (Stock Keeping Unit).
+  nombre_producto        String // Nombre del producto.
+  producto_precio_compra Decimal // Precio de compra del producto (costo para la empresa).
+  producto_tipo_unidad   String // Unidad del producto (ej. "kg", "litro", "unidad").
+  precio_venta_menor     Decimal // Precio de venta al por menor.
+  precio_venta_mayor     Decimal // Precio de venta al por mayor.
+  codigo_producto        String           @unique // Código único del producto (puede ser diferente del SKU).
+  stock_actual           Int // Cantidad actual en inventario.
+  stock_minimo           Int // Cantidad mínima que debe haber en inventario.
+  cantidad_vendidos      Int              @default(0) // Cantidad de unidades vendidas hasta ahora.
+  foto_url               String? // URL opcional de la imagen del producto.
+  foto_id                String? // ID opcional de la imagen del producto (para servicios como Cloudinary).
+  fecha_vencimiento      DateTime? // Fecha de vencimiento del producto, si aplica.
+  descuento              Int? // Descuento opcional aplicado al producto, en porcentaje.
+  marca                  String? // Marca opcional del producto.
+  descripcion            String? // Descripción opcional del producto.
+  precio_por_kilo        Decimal? // Precio del producto por kilogramo, si aplica.
+  // precio_compra          Decimal // Precio al que se compró el producto.
+  // unidad_medida          String // Unidad de medida del producto (ej. "gramos", "litros", "piezas").
+  created_at             DateTime         @default(now()) // Fecha y hora de creación del registro.
+  updated_at             DateTime         @updatedAt // Fecha y hora de la última actualización del registro.
+  DetalleVentas          DetalleVentas[] // Relación con los detalles de las ventas en las que se incluye este producto.
+  Devoluciones           Devoluciones[] // Relación con las devoluciones asociadas a este producto.
+  DetalleSalidas         DetalleSalidas[] // Relación con los detalles de salidas del inventario para este producto.
+  categoria              Categorias       @relation(fields: [id_categoria], references: [id_categoria]) // Relación con la categoría del producto.
+  proveedor              Proveedores      @relation(fields: [id_proveedor], references: [id_proveedor]) // Relación con el proveedor del producto.
+}
+
+model Categorias {
+  id_categoria String      @id @default(uuid())
+  nombre       String
+  estado       Boolean     @default(true)
+  productos    Productos[]
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+}
+
+model Proveedores {
+  id_proveedor     String      @id @default(uuid())
+  tipo_documento   String
+  numero_documento String
+  nombre           String
+  direccion        String?
+  estado           Boolean
+  email            String?
+  telefono         String?
+  nombre_encargado String?
+  created_at       DateTime    @default(now())
+  updated_at       DateTime    @updatedAt
+  productos        Productos[]
+}
+
+model Ventas {
+  id_venta        String         @id @default(uuid()) // Identificador único de la venta.
+  numero_proforma String?        @unique // Código de proforma o boleta asociado a la venta.
+  id_empleado     String // ID del empleado que realizó la venta.
+  id_caja         String // ID de la caja en la que se realizó la venta.
+  tipo_venta      String // Tipo de venta (por mayor, por menor, menudeo). - credito - contado
+  monto_total     Decimal // Monto total de la venta.
+  venta_pagado    Decimal // Monto pagado por el cliente.
+  venta_vuelto    Decimal // Monto devuelto como cambio al cliente.
+  fecha_venta     DateTime       @default(now()) // Fecha y hora en que se realizó la venta.
+  estado          Boolean        @default(true) // Estado de la venta (completa, anulada).
+  observaciones   String? // Observaciones adicionales sobre la venta (opcional).
+  hubo_devolucion Boolean        @default(false) // Indica si hubo devoluciones asociadas a esta venta.
+  Empleados       Empleados      @relation(fields: [id_empleado], references: [id_empleado]) // Relación con el empleado que realizó la venta.
+  pageCliente     PagosClientes? // Relación con el pago realizado por el cliente (opcional).
+  id_cliente      String? // ID del cliente que realizó la compra (opcional).
+  Clientes        Clientes?      @relation(fields: [id_cliente], references: [id_cliente]) // Relación con el cliente de la venta (opcional).
+
+  caja          Caja            @relation(fields: [id_caja], references: [id_caja]) // Relación con la caja utilizada para la venta.
+  DetalleVentas DetalleVentas[] // Relación con los detalles de los productos vendidos en esta venta.
+  Devoluciones  Devoluciones[] // Relación con las devoluciones asociadas a esta venta.
+}
+
+model DetalleVentas {
+  id_detalle      String    @id @default(uuid()) // Identificador único del detalle de la venta.
+  id_venta        String // ID de la venta a la que pertenece este detalle.
+  id_producto     String // ID del producto vendido.
+  cantidad        Int // Cantidad del producto vendido (por unidad).
+  precio_unitario Decimal // Precio unitario del producto vendido.
+  precio_rebaja   Decimal? // Precio unitario con rebaja aplicada (opcional).
+  subtotal        Decimal // Subtotal (precio_unitario * cantidad).
+  tiene_rebaja    Boolean   @default(false) // Indica si este producto tiene una rebaja aplicada.
+  cantidad_peso   Decimal? // Cantidad en kilogramos si el producto se vende por peso (opcional).
+  Ventas          Ventas    @relation(fields: [id_venta], references: [id_venta], onDelete: Cascade) // Relación con la venta asociada.
+  Productos       Productos @relation(fields: [id_producto], references: [id_producto]) // Relación con el producto vendido.
+}
+
+// model Ventas {
+//   id_venta        String         @id @default(uuid())
+//   numero_proforma String?        @unique // Número de la proforma o boleta, opcional
+//   // codigo de venta
+//   // numero de proforma
+//   id_empleado     String
+//   id_caja         String
+//   tipo_venta      String // por_mayor - por_menor - menudeo 
+//   // monto de rebaja 
+//   // monot con rebaja
+//   monto_total     Decimal
+//   venta_pagado    Decimal
+//   venta_vuelto    Decimal
+//   fecha_venta     DateTime       @default(now())
+//   estado          String // completa - anulada
+//   observaciones   String?
+//   hubo_devolucion Boolean        @default(false)
+//   Empleados       Empleados      @relation(fields: [id_empleado], references: [id_empleado])
+//   pageCliente     PagosClientes?
+//   id_cliente      String?
+//   Clientes        Clientes?      @relation(fields: [id_cliente], references: [id_cliente])
+
+//   caja          Caja            @relation(fields: [id_caja], references: [id_caja])
+//   DetalleVentas DetalleVentas[]
+//   Devoluciones  Devoluciones[]
+// }
+
+// model DetalleVentas {
+//   id_detalle      String    @id @default(uuid())
+//   id_venta        String
+//   id_producto     String
+//   cantidad        Int
+//   precio_unitario Decimal
+//   subtotal        Decimal
+//   cantidad_peso   Decimal? // Cantidad en kilogramos si el producto se vende por peso
+//   Ventas          Ventas    @relation(fields: [id_venta], references: [id_venta], onDelete: Cascade)
+//   Productos       Productos @relation(fields: [id_producto], references: [id_producto])
+// }
+
+model Devoluciones {
+  id_devolucion    String    @id @default(uuid())
+  id_venta         String
+  id_empleado      String
+  id_producto      String
+  cantidad         Int
+  fecha_devolucion DateTime  @default(now())
+  observaciones    String?
+  Ventas           Ventas    @relation(fields: [id_venta], references: [id_venta])
+  Empleados        Empleados @relation(fields: [id_empleado], references: [id_empleado])
+  Productos        Productos @relation(fields: [id_producto], references: [id_producto])
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+}
+
+model Bonos {
+  id_bono       String    @id @default(uuid())
+  id_empleado   String
+  monto_bono    Decimal
+  fecha_bono    DateTime  @default(now())
+  observaciones String?
+  Empleados     Empleados @relation(fields: [id_empleado], references: [id_empleado])
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+}
+
+model SalidasProductos {
+  id_salida      String           @id @default(uuid())
+  id_empleado    String
+  fecha_salida   DateTime         @default(now())
+  observaciones  String?
+  Empleados      Empleados        @relation(fields: [id_empleado], references: [id_empleado])
+  DetalleSalidas DetalleSalidas[]
+}
+
+model DetalleSalidas {
+  id_detalle       String           @id @default(uuid())
+  id_salida        String
+  id_producto      String
+  cantidad         Int
+  SalidasProductos SalidasProductos @relation(fields: [id_salida], references: [id_salida], onDelete: Cascade)
+  Productos        Productos        @relation(fields: [id_producto], references: [id_producto])
+}
+
+model Caja {
+  id_caja      String         @id @default(uuid())
+  id_empleado  String
+  numero_caja  Int
+  nombre       String
+  efectivo     Decimal
+  estado       Boolean        @default(true)
+  Empleados    Empleados      @relation(fields: [id_empleado], references: [id_empleado])
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+  ventas       Ventas[]
+  AperturaCaja AperturaCaja[]
+  CierreCaja   CierreCaja[]
+}
+
+model CierreCaja {
+  id_cierre      String   @id @default(uuid())
+  id_caja        String
+  total_vendido  Decimal
+  total_ganancia Decimal
+  monto_dejado   Decimal
+  fecha_cierre   DateTime @default(now())
+  observaciones  String?
+  Caja           Caja     @relation(fields: [id_caja], references: [id_caja])
+}
+
+model AperturaCaja {
+  id_apertura    String   @id @default(uuid())
+  id_caja        String
+  monto_inicial  Decimal
+  fecha_apertura DateTime @default(now())
+  observaciones  String?
+  Caja           Caja     @relation(fields: [id_caja], references: [id_caja])
+}

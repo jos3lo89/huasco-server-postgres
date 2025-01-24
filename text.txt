@@ -1,0 +1,41 @@
+n proforma 
+cantidad producto
+nombre producto
+precio unitario
+precio total 
+
+
+
+
+-- que se acumela  las comprar futuras
+
+
+
+--  la hora de vender rebajas 
+
+
+-- el codigode venta ponen ellos de acuerdo a la proforma 
+
+
+
+-- tipo de unidad caja 1kilo pero se parte en 2  medio medio 
+
+
+
+-- deudores detalladao con tabla tanstaack 
+
+-- ventas por vendedores  
+  - cada dia hay un vendedor 
+  - registrar solo de el 
+  
+
+- editar productos  al final 
+
+
+-- diferentes tipo de presentación de productos para venta 
+-- sobres , kilo , medio , completo 
+- calcular la cantidad del producto en dinero viciversa 
+
+
+
+
