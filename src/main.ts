@@ -7,7 +7,7 @@ async function bootstrap() {
 
   app.enableCors({
     // origin: 'http://localhost:5173',
-    origin: '*',
+    origin: 'https://huasco-client.vercel.app',
 
     credentials: true,
   });
