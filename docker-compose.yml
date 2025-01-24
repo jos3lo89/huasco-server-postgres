@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:alpine
+    environment:
+      POSTGRES_USER: jos3lo
+      POSTGRES_PASSWORD: 3322
+      POSTGRES_DB: huasco
+    ports:
+      - '8000:5432'
+    volumes:
+      - db_data_huasco:/var/lib/postgresql/data
+
+volumes:
+  db_data_huasco:
